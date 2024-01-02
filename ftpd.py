@@ -1,6 +1,7 @@
 # ftpd_server.py
 import tkinter as tk
 import ftpHandler as ftpH
+import ipFilter
 from tkinter import messagebox
 from tkinter import filedialog
 from threading import Thread
@@ -12,6 +13,7 @@ class FTPServerGUI:
     def __init__(self, root):
         self.root = root
         root.title("Servidor FTP")
+        self.ip_filter = ipFilter.IPFilter('blocked_ips')  # 'blocked_ips.ipf' será el archivo utilizado
 
         tk.Label(root, text="Usuario:").pack()
         self.username_entry = tk.Entry(root)
@@ -45,10 +47,20 @@ class FTPServerGUI:
         self.tls_checkbox = tk.Checkbutton(root, text="Activar TLS", variable=self.tls_var, command=self.on_tls_checkbox)
         self.tls_checkbox.pack()
 
+        self.ip_manage_button = tk.Button(root, text="Gestionar IPs", command=self.open_ip_manage_popup)
+        self.ip_manage_button.pack()
+
+        # Campo para la ruta del certificado
         self.cert_file_entry = tk.Entry(root)
         self.cert_file_entry.pack()
-        self.cert_file_button = tk.Button(root, text="Seleccionar Certificado", command=self.on_select_cert)
+        self.cert_file_button = tk.Button(root, text="Seleccionar Certificado", command=lambda: self.on_select_file('cert'))
         self.cert_file_button.pack()
+
+        # Campo para la ruta de la clave privada
+        self.key_file_entry = tk.Entry(root)
+        self.key_file_entry.pack()
+        self.key_file_button = tk.Button(root, text="Seleccionar Clave Privada", command=lambda: self.on_select_file('key'))
+        self.key_file_button.pack()
 
         self.server = None
         self.server_thread = None
@@ -73,17 +85,59 @@ class FTPServerGUI:
             self.cert_file_entry.config(state='disabled')
             self.cert_file_button.config(state='disabled')
     
-    def on_select_cert(self):
-        # Abre un diálogo para seleccionar un archivo
-        cert_file = filedialog.askopenfilename(
-            title="Seleccionar Certificado",
-            filetypes=(("Archivos PEM", "*.pem"), ("Todos los archivos", "*.*"))
+    def on_select_file(self, file_type):
+        file_path = filedialog.askopenfilename(
+            title=f"Seleccionar {'Certificado' if file_type == 'cert' else 'Clave Privada'}",
+            filetypes=(("Archivos PEM", "*.pem"), ("Archivos KEY", "*.key"), ("Todos los archivos", "*.*"))
         )
+        if file_path:
+            if file_type == 'cert':
+                self.cert_file_entry.delete(0, tk.END)
+                self.cert_file_entry.insert(0, file_path)
+            elif file_type == 'key':
+                self.key_file_entry.delete(0, tk.END)
+                self.key_file_entry.insert(0, file_path)
 
-        # Actualiza la entrada de texto con la ruta del archivo seleccionado
-        if cert_file:  # Comprobar si se seleccionó un archivo
-            self.cert_file_entry.delete(0, tk.END)  # Eliminar el contenido actual
-            self.cert_file_entry.insert(0, cert_file)  # Insertar la ruta del archivo seleccionado
+    def open_ip_manage_popup(self):
+        self.popup = tk.Toplevel(self.root)
+        self.popup.title("Gestión de IPs")
+
+        # Sección para añadir IP
+        tk.Label(self.popup, text="Añadir IP:").pack()
+        self.add_ip_entry = tk.Entry(self.popup)
+        self.add_ip_entry.pack()
+        add_ip_button = tk.Button(self.popup, text="Añadir", command=self.add_ip_to_filter)
+        add_ip_button.pack()
+
+        # Sección para mostrar y eliminar IPs bloqueadas
+        tk.Label(self.popup, text="IPs Bloqueadas:").pack()
+        self.blocked_ips_listbox = tk.Listbox(self.popup)
+        self.blocked_ips_listbox.pack()
+        self.update_blocked_ips_listbox()
+
+        remove_ip_button = tk.Button(self.popup, text="Eliminar IP Seleccionada", command=self.remove_selected_ip)
+        remove_ip_button.pack()
+
+    def add_ip_to_filter(self):
+        ip_to_add = self.add_ip_entry.get()
+        if self.ip_filter.add_ip(ip_to_add):
+            self.update_blocked_ips_listbox()
+        else:
+            messagebox.showerror("Error", "Dirección IP no válida o ya añadida.")
+
+    def remove_selected_ip(self):
+        selected_indices = self.blocked_ips_listbox.curselection()
+        if selected_indices:
+            selected_ip = self.blocked_ips_listbox.get(selected_indices[0])
+            if self.ip_filter.remove_ip(selected_ip):
+                self.update_blocked_ips_listbox()
+            else:
+                messagebox.showerror("Error", "La dirección IP no se encuentra en la lista.")
+
+    def update_blocked_ips_listbox(self):
+        self.blocked_ips_listbox.delete(0, tk.END)  # Limpiar lista actual
+        for ip in self.ip_filter.blocked_ips:
+            self.blocked_ips_listbox.insert(tk.END, ip)  # Añadir IPs a la lista
 
     def start_server(self):
         username = self.username_entry.get()
@@ -100,13 +154,14 @@ class FTPServerGUI:
         # Comprobar si TLS está activado
         if self.tls_var.get():
             cert_file = self.cert_file_entry.get()
-            if cert_file:
-                # Configurar el handler para usar TLS
+            key_file = self.key_file_entry.get()
+            if cert_file and key_file:
                 ftpH.CustomFTPHandler.certfile = cert_file
+                ftpH.CustomFTPHandler.keyfile = key_file
                 ftpH.CustomFTPHandler.tls_control_required = True
                 ftpH.CustomFTPHandler.tls_data_required = True
             else:
-                messagebox.showerror("Error", "Certificado TLS no especificado")
+                messagebox.showerror("Error", "Certificado o clave privada no especificados")
                 return
         else:
             # Configurar el handler para no usar TLS
