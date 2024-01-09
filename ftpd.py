@@ -21,33 +21,6 @@ class FTPServerGUI:
         self.server_frame = tk.Frame(root)
         self.server_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Marco para las opciones avanzadas
-        self.options_frame = OptionsFrame(root, show_server_callback=self.show_server)
-
-        # Menú de opciones
-        self.menu_frame = tk.Frame(self.server_frame)
-        self.menu_frame.pack(side=tk.TOP, fill=tk.X)
-
-        # Botón de opciones
-        self.options_button = tk.Button(self.menu_frame, text="Opciones", command=self.show_options)
-        self.options_button.pack(side=tk.LEFT)
-
-        tk.Label(self.server_frame, text="Usuario:").pack()
-        self.username_entry = tk.Entry(self.server_frame)
-        self.username_entry.pack()
-
-        tk.Label(self.server_frame, text="Contraseña:").pack()
-        self.username_entry = tk.Entry(self.server_frame, show="*")
-        self.username_entry.pack()
-
-        # Botón para seleccionar el directorio
-        self.directory_button = tk.Button(self.server_frame, text="Seleccionar Directorio", command=self.select_directory)
-        self.directory_button.pack()
-
-        # Campo para mostrar el directorio seleccionado
-        self.directory_entry = tk.Entry(self.server_frame)
-        self.directory_entry.pack()
-
         self.user_count = 0
         self.user_count_label = tk.Label(self.server_frame, text="Usuarios conectados: 0")
         self.user_count_label.pack()
@@ -63,6 +36,17 @@ class FTPServerGUI:
 
         self.stop_button = tk.Button(self.server_frame, text="Detener Servidor", command=self.stop_server, state=tk.DISABLED)
         self.stop_button.pack()
+
+        # Marco para las opciones avanzadas
+        self.options_frame = OptionsFrame(root, show_server_callback=self.show_server)
+
+        # Menú de opciones
+        self.menu_frame = tk.Frame(self.server_frame)
+        self.menu_frame.pack(side=tk.TOP, fill=tk.X)
+
+        # Botón de opciones
+        self.options_button = tk.Button(self.menu_frame, text="Opciones", command=self.show_options)
+        self.options_button.pack(side=tk.BOTTOM)
 
         self.server = None
         self.server_thread = None
@@ -94,19 +78,16 @@ class FTPServerGUI:
         self.user_count_label.config(text=f"Usuarios conectados: {self.user_count}")
 
     def start_server(self):
-        username = self.username_entry.get()
-        password = self.password_entry.get()
-        directory = self.directory_entry.get()
-
-        if directory:
-            authorizer = DummyAuthorizer()
-            authorizer.add_user(username, password, directory, perm="elradfmw")
-        else:
-            messagebox.showerror("Error", "Por favor, seleccione un directorio.")
+        username = self.options_frame.get_username()
+        password = self.options_frame.get_password()
+        directory = self.options_frame.get_directory()
 
         if not (username and password and directory):
             messagebox.showerror("Error", "Todos los campos son obligatorios")
             return
+
+        authorizer = DummyAuthorizer()
+        authorizer.add_user(username, password, directory, perm="elradfmw")
 
         # Comprobar si TLS está activado
         if self.options_frame.is_tls_enabled():

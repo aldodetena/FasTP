@@ -1,5 +1,6 @@
 import tkinter as tk
 import ipFilter
+from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
 
@@ -10,32 +11,65 @@ class OptionsFrame(tk.Frame):
 
         super().__init__(master, **kwargs)
 
+        # Crea el Notebook (contenedor de pestañas)
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(expand=True, fill="both")
+
+        # Crea el Frame para opciones básicas
+        self.basic_options_frame = tk.Frame(self.notebook)
+        self.notebook.add(self.basic_options_frame, text='Opciones Básicas')
+
+        tk.Label(self.basic_options_frame, text="Usuario:").pack()
+        self.username_entry = tk.Entry(self.basic_options_frame)
+        self.username_entry.pack()
+
+        tk.Label(self.basic_options_frame, text="Contraseña:").pack()
+        self.password_entry = tk.Entry(self.basic_options_frame, show="*")
+        self.password_entry.pack()
+
+        self.directory_button = tk.Button(self.basic_options_frame, text="Seleccionar Directorio", command=self.select_directory)
+        self.directory_button.pack()
+
+        self.directory_entry = tk.Entry(self.basic_options_frame)
+        self.directory_entry.pack()
+
+        # Crea el Frame para opciones avanzadas
+        self.advanced_options_frame = tk.Frame(self.notebook)
+        self.notebook.add(self.advanced_options_frame, text='Opciones Avanzadas')
+
+        # Aquí comienza la modificación
         self.ip_filter = ipFilter.IPFilter('blocked_ips')  # 'blocked_ips.ipf' será el archivo utilizado
 
         self.tls_var = tk.BooleanVar()
-        self.tls_checkbox = tk.Checkbutton(self, text="Activar TLS", variable=self.tls_var, command=self.on_tls_checkbox)
+        self.tls_checkbox = tk.Checkbutton(self.advanced_options_frame, text="Activar TLS", variable=self.tls_var, command=self.on_tls_checkbox)
         self.tls_checkbox.pack()
 
         # Botón para gestionar IPs
-        self.ip_manage_button = tk.Button(self, text="Gestionar IPs", command=self.open_ip_manage_popup)
+        self.ip_manage_button = tk.Button(self.advanced_options_frame, text="Gestionar IPs", command=self.open_ip_manage_popup)
         self.ip_manage_button.pack()
 
         # Campo para la ruta del certificado
-        self.cert_file_entry = tk.Entry(self)
+        self.cert_file_entry = tk.Entry(self.advanced_options_frame)
         self.cert_file_entry.pack()
-        self.cert_file_button = tk.Button(self, text="Seleccionar Certificado", command=lambda: self.on_select_file('cert'))
+        self.cert_file_button = tk.Button(self.advanced_options_frame, text="Seleccionar Certificado", command=lambda: self.on_select_file('cert'))
         self.cert_file_button.pack()
 
         # Campo para la ruta de la clave privada
-        self.key_file_entry = tk.Entry(self)
+        self.key_file_entry = tk.Entry(self.advanced_options_frame)
         self.key_file_entry.pack()
-        self.key_file_button = tk.Button(self, text="Seleccionar Clave Privada", command=lambda: self.on_select_file('key'))
+        self.key_file_button = tk.Button(self.advanced_options_frame, text="Seleccionar Clave Privada", command=lambda: self.on_select_file('key'))
         self.key_file_button.pack()
 
         # Botón para volver al frame principal
         if self.show_server_callback:
             self.back_button = tk.Button(self, text="Volver al Servidor", command=self.show_server_callback)
             self.back_button.pack()
+    
+    def select_directory(self):
+        directory = filedialog.askdirectory()
+        if directory:
+            self.directory_entry.delete(0, tk.END)
+            self.directory_entry.insert(0, directory)
 
     def on_tls_checkbox(self):
         if self.tls_var.get():
@@ -50,15 +84,6 @@ class OptionsFrame(tk.Frame):
             self.cert_file_button.config(state='disabled')
             self.key_file_entry.config(state='disabled')
             self.key_file_button.config(state='disabled')
-    
-    def is_tls_enabled(self):
-        return self.tls_var.get()
-
-    def get_tls_cert_file(self):
-        return self.cert_file_entry.get()
-
-    def get_tls_key_file(self):
-        return self.key_file_entry.get()
 
     def on_select_file(self, file_type):
         file_path = filedialog.askopenfilename(
@@ -113,3 +138,22 @@ class OptionsFrame(tk.Frame):
         self.blocked_ips_listbox.delete(0, tk.END)  # Limpiar lista actual
         for ip in self.ip_filter.blocked_ips:
             self.blocked_ips_listbox.insert(tk.END, ip)  # Añadir IPs a la lista
+
+    def is_tls_enabled(self):
+        return self.tls_var.get()
+
+    def get_tls_cert_file(self):
+        return self.cert_file_entry.get()
+
+    def get_tls_key_file(self):
+        return self.key_file_entry.get()
+
+    # Métodos para obtener los valores ingresados
+    def get_username(self):
+        return self.username_entry.get()
+
+    def get_password(self):
+        return self.password_entry.get()
+
+    def get_directory(self):
+        return self.directory_entry.get()
