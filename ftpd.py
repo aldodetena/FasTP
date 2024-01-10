@@ -31,11 +31,11 @@ class FTPServerGUI:
         self.status_label = tk.Label(self.server_frame, text="Estado: Detenido")
         self.status_label.pack()
 
-        self.start_button = tk.Button(self.server_frame, text="Iniciar Servidor", command=self.start_server)
-        self.start_button.pack()
+        self.start_button = tk.Button(self.server_frame, text="Iniciar Servidor", bg="green", command=self.start_server, width=15)
+        self.start_button.pack(pady=5)
 
-        self.stop_button = tk.Button(self.server_frame, text="Detener Servidor", command=self.stop_server, state=tk.DISABLED)
-        self.stop_button.pack()
+        self.stop_button = tk.Button(self.server_frame, text="Detener Servidor", bg="red", command=self.stop_server, state=tk.DISABLED , width=15)
+        self.stop_button.pack(pady=5)
 
         # Marco para las opciones avanzadas
         self.options_frame = OptionsFrame(root, show_server_callback=self.show_server)
@@ -77,10 +77,25 @@ class FTPServerGUI:
         self.user_count += change
         self.user_count_label.config(text=f"Usuarios conectados: {self.user_count}")
 
+    # Función para limpiar el área de texto del log
+    def clear_log(self):
+        self.log_text.config(state='normal')
+        self.log_text.delete('1.0', tk.END)  # Eliminar todo el texto desde el principio hasta el final
+        self.log_text.config(state='disabled')
+
+    # Función para manejar la reinicialización a 0 de los usuarios conectados
+    def update_user_count(self, change):
+        self.user_count += change
+        self.user_count_label.config(text=f"Usuarios conectados: {self.user_count}")
+
     def start_server(self):
         username = self.options_frame.get_username()
         password = self.options_frame.get_password()
         directory = self.options_frame.get_directory()
+
+        self.user_count = 0
+        self.update_user_count(0)
+        self.clear_log()
 
         if not (username and password and directory):
             messagebox.showerror("Error", "Todos los campos son obligatorios")
@@ -106,6 +121,7 @@ class FTPServerGUI:
             ftpH.CustomFTPHandler.tls_control_required = False
             ftpH.CustomFTPHandler.tls_data_required = False
 
+        ftpH.CustomFTPHandler.authorizer = authorizer
         ftpH.CustomFTPHandler.gui = self
         ftpH.CustomFTPHandler.ip_filter = self.ip_filter
         self.server = FTPServer(("0.0.0.0", 45000), ftpH.CustomFTPHandler)

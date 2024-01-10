@@ -27,11 +27,12 @@ class OptionsFrame(tk.Frame):
         self.password_entry = tk.Entry(self.basic_options_frame, show="*")
         self.password_entry.pack()
 
-        self.directory_button = tk.Button(self.basic_options_frame, text="Seleccionar Directorio", command=self.select_directory)
-        self.directory_button.pack()
-
+        tk.Label(self.basic_options_frame, text="Directorio:").pack()
         self.directory_entry = tk.Entry(self.basic_options_frame)
-        self.directory_entry.pack()
+        self.directory_entry.pack(pady=5)
+
+        self.directory_button = tk.Button(self.basic_options_frame, text="Seleccionar Directorio", command=self.select_directory, width=20)
+        self.directory_button.pack(pady=5)
 
         # Crea el Frame para opciones avanzadas
         self.advanced_options_frame = tk.Frame(self.notebook)
@@ -40,25 +41,25 @@ class OptionsFrame(tk.Frame):
         # Aquí comienza la modificación
         self.ip_filter = ipFilter.IPFilter('blocked_ips')  # 'blocked_ips.ipf' será el archivo utilizado
 
-        self.tls_var = tk.BooleanVar()
-        self.tls_checkbox = tk.Checkbutton(self.advanced_options_frame, text="Activar TLS", variable=self.tls_var, command=self.on_tls_checkbox)
-        self.tls_checkbox.pack()
-
         # Botón para gestionar IPs
-        self.ip_manage_button = tk.Button(self.advanced_options_frame, text="Gestionar IPs", command=self.open_ip_manage_popup)
-        self.ip_manage_button.pack()
+        self.ip_manage_button = tk.Button(self.advanced_options_frame, text="Gestionar IPs", command=self.open_ip_manage_popup, width=20)
+        self.ip_manage_button.pack(pady=5)
 
         # Campo para la ruta del certificado
         self.cert_file_entry = tk.Entry(self.advanced_options_frame)
         self.cert_file_entry.pack()
-        self.cert_file_button = tk.Button(self.advanced_options_frame, text="Seleccionar Certificado", command=lambda: self.on_select_file('cert'))
-        self.cert_file_button.pack()
+        self.cert_file_button = tk.Button(self.advanced_options_frame, text="Seleccionar Certificado", command=lambda: self.on_select_file('cert'), width=20)
+        self.cert_file_button.pack(pady=5)
 
         # Campo para la ruta de la clave privada
         self.key_file_entry = tk.Entry(self.advanced_options_frame)
         self.key_file_entry.pack()
-        self.key_file_button = tk.Button(self.advanced_options_frame, text="Seleccionar Clave Privada", command=lambda: self.on_select_file('key'))
-        self.key_file_button.pack()
+        self.key_file_button = tk.Button(self.advanced_options_frame, text="Seleccionar Clave Privada", command=lambda: self.on_select_file('key'), width=20)
+        self.key_file_button.pack(pady=5)
+
+        self.tls_var = tk.BooleanVar()
+        self.tls_checkbox = tk.Checkbutton(self.advanced_options_frame, text="Activar TLS", variable=self.tls_var, command=self.on_tls_checkbox)
+        self.tls_checkbox.pack(pady=5)
 
         # Botón para volver al frame principal
         if self.show_server_callback:

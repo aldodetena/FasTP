@@ -34,12 +34,13 @@ class CustomFTPHandler(FTPHandler):
                 CustomFTPHandler.gui.update_user_count(1)
 
     def on_disconnect(self):
-        super().on_disconnect()
+        super().on_disconnect() # Posiblemente el fallo está en esta linea
         CustomFTPHandler.handle_log(f"Cliente desconectado: {self.remote_ip}")
         if CustomFTPHandler.gui:
             CustomFTPHandler.gui.update_user_count(-1)
 
     def on_login_failed(self, username, password):
+        CustomFTPHandler.handle_log(f"Intento de inicio de sesión fallido para el usuario '{username}' con contraseña '{password}'")
         ip = self.remote_ip
         attempts, last_attempt_time = CustomFTPHandler.login_attempts.get(ip, [0, time.time()])
         if time.time() - last_attempt_time > CustomFTPHandler.block_time:
@@ -57,7 +58,7 @@ class CustomFTPHandler(FTPHandler):
     
     @staticmethod
     def handle_log(message):
-        """Maneja el registro de eventos, ya sea en la GUI o en el log estándar."""
+        # Maneja el registro de eventos, ya sea en la GUI o en el log estándar.
         if CustomFTPHandler.gui:
             CustomFTPHandler.gui.log_event(message)
         else:
