@@ -106,14 +106,14 @@ class OptionsFrame(tk.Frame):
         # Sección para añadir IP
         tk.Label(self.popup, text="Añadir IP:").pack()
         self.add_ip_entry = tk.Entry(self.popup)
-        self.add_ip_entry.pack()
+        self.add_ip_entry.pack(pady=5)
         add_ip_button = tk.Button(self.popup, text="Añadir", command=self.add_ip_to_filter)
-        add_ip_button.pack()
+        add_ip_button.pack(pady=5)
 
         # Sección para mostrar y eliminar IPs bloqueadas
         tk.Label(self.popup, text="IPs Bloqueadas:").pack()
         self.blocked_ips_listbox = tk.Listbox(self.popup)
-        self.blocked_ips_listbox.pack()
+        self.blocked_ips_listbox.pack(pady=5)
         self.update_blocked_ips_listbox()
 
         remove_ip_button = tk.Button(self.popup, text="Eliminar IP Seleccionada", command=self.remove_selected_ip)
