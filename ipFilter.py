@@ -1,9 +1,16 @@
 import ipaddress
+import threading
 
 class IPFilter:
     def __init__(self, filename):
         self.filename = filename + ".ipf"
         self.blocked_ips = self.load_blocked_ips()
+
+    def reload_blocked_ips(self):
+        """Método para recargar la lista de IPs bloqueadas desde el archivo."""
+        new_blocked_ips = self.load_blocked_ips()
+        if new_blocked_ips != self.blocked_ips:
+            self.blocked_ips = new_blocked_ips
 
     def is_valid_ip(self, ip):
         try:
@@ -25,6 +32,18 @@ class IPFilter:
             self.save_blocked_ips()
             return True
         return False
+    
+    def block_temporarily(self, ip, duration):
+        """Bloquea una IP temporalmente y la desbloquea después de 'duration' segundos."""
+        if self.add_ip(ip):
+            # Configura un temporizador para desbloquear la IP
+            timer = threading.Timer(duration, self.unblock_ip, [ip])
+            timer.start()
+
+    def unblock_ip(self, ip):
+        """Desbloquea una IP específica."""
+        if self.remove_ip(ip): # Quita la IP de la lista de bloqueados
+            print(f"IP {ip} desbloqueada")
 
     def is_blocked(self, ip):
         return ip in self.blocked_ips

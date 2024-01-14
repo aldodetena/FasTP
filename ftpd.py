@@ -1,4 +1,6 @@
 # ftpd_server.py
+import threading
+import time
 import tkinter as tk
 import ftpHandler as ftpH
 import ipFilter
@@ -8,7 +10,6 @@ from tkinter import filedialog
 from threading import Thread
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.servers import FTPServer
-from osDetector import firewallConf
 
 class FTPServerGUI:
     def __init__(self, root):
@@ -36,6 +37,8 @@ class FTPServerGUI:
 
         self.stop_button = tk.Button(self.server_frame, text="Detener Servidor", bg="red", command=self.stop_server, state=tk.DISABLED , width=15)
         self.stop_button.pack(pady=5)
+
+        threading.Thread(target=self.reload_ips_periodically, daemon=True).start()
 
         # Marco para las opciones avanzadas
         self.options_frame = OptionsFrame(root, show_server_callback=self.show_server)
@@ -88,6 +91,15 @@ class FTPServerGUI:
         self.user_count += change
         self.user_count_label.config(text=f"Usuarios conectados: {self.user_count}")
 
+    def reload_ips_periodically(self):
+        while True:
+            try:
+                self.ip_filter.reload_blocked_ips()
+                self.log_event("Lista de IPs actualizada correctamente")
+            except Exception as e:
+                self.log_event(f"Error al recargar las IPs: {e}")
+            time.sleep(60)
+
     def start_server(self):
         username = self.options_frame.get_username()
         password = self.options_frame.get_password()
@@ -104,27 +116,32 @@ class FTPServerGUI:
         authorizer = DummyAuthorizer()
         authorizer.add_user(username, password, directory, perm="elradfmw")
 
-        # Comprobar si TLS está activado
+        handler = ftpH.CustomFTPHandler
+        handler.authorizer = authorizer
+
         if self.options_frame.is_tls_enabled():
             cert_file = self.options_frame.get_tls_cert_file()
             key_file = self.options_frame.get_tls_key_file()
+
             if cert_file and key_file:
-                ftpH.CustomFTPHandler.certfile = cert_file
-                ftpH.CustomFTPHandler.keyfile = key_file
-                ftpH.CustomFTPHandler.tls_control_required = True
-                ftpH.CustomFTPHandler.tls_data_required = True
+                # Asignar el cert y la key al handler
+                handler.certfile = cert_file
+                handler.keyfile = key_file
+                handler.tls_control_required = True
+                handler.tls_data_required = True
             else:
                 messagebox.showerror("Error", "Certificado o clave privada no especificados")
                 return
         else:
-            ftpH.CustomFTPHandler.certfile = None
-            ftpH.CustomFTPHandler.tls_control_required = False
-            ftpH.CustomFTPHandler.tls_data_required = False
+            handler.certfile = None
+            handler.keyfile = None
+            handler.tls_control_required = False
+            handler.tls_data_required = False
 
-        ftpH.CustomFTPHandler.authorizer = authorizer
-        ftpH.CustomFTPHandler.gui = self
-        ftpH.CustomFTPHandler.ip_filter = self.ip_filter
-        self.server = FTPServer(("0.0.0.0", 45000), ftpH.CustomFTPHandler)
+        handler.gui = self
+        handler.ip_filter = self.ip_filter
+
+        self.server = FTPServer(('0.0.0.0', 45000), handler)
         self.server_thread = Thread(target=self.server.serve_forever)
         self.server_thread.daemon = True
         self.server_thread.start()
@@ -132,7 +149,7 @@ class FTPServerGUI:
         self.start_button.config(state=tk.DISABLED)
         self.stop_button.config(state=tk.NORMAL)
         self.status_label.config(text="Estado: En ejecución")
-
+        
     def stop_server(self):
         if self.server:
             self.server.close_all()  # Cierra todas las conexiones del servidor

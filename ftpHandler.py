@@ -1,8 +1,9 @@
-from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.handlers import TLS_FTPHandler
 import time
+import ssl
 import json
 
-class CustomFTPHandler(FTPHandler):
+class CustomFTPHandler(TLS_FTPHandler):
     gui = None  # Variable de clase para mantener la referencia a la GUI
     ip_filter = None  # Referencia a IPFilter
     login_attempts = {}  # Diccionario para rastrear los intentos fallidos
@@ -40,13 +41,15 @@ class CustomFTPHandler(FTPHandler):
             CustomFTPHandler.gui.update_user_count(-1)
 
     def on_login_failed(self, username, password):
-        CustomFTPHandler.handle_log(f"Intento de inicio de sesión fallido para el usuario '{username}' con contraseña '{password}'")
+        CustomFTPHandler.handle_log(f"Intento de inicio de sesión fallido para el usuario '{username}'")
         ip = self.remote_ip
         attempts, last_attempt_time = CustomFTPHandler.login_attempts.get(ip, [0, time.time()])
         if time.time() - last_attempt_time > CustomFTPHandler.block_time:
             attempts = 0
         CustomFTPHandler.login_attempts[ip] = [attempts + 1, time.time()]
         if attempts >= CustomFTPHandler.max_attempts:
+            # Bloquear la IP utilizando IPFilter
+            CustomFTPHandler.ip_filter.block_temporarily(ip, CustomFTPHandler.block_time)
             CustomFTPHandler.handle_log("Demasiados intentos fallidos: " + ip)
             self.close_when_done()
 
