@@ -41,7 +41,7 @@ class FTPServerGUI:
         threading.Thread(target=self.reload_ips_periodically, daemon=True).start()
 
         # Marco para las opciones avanzadas
-        self.options_frame = OptionsFrame(root, show_server_callback=self.show_server)
+        self.options_frame = OptionsFrame(root, ip_filter=self.ip_filter, show_server_callback=self.show_server)
 
         # Menú de opciones
         self.menu_frame = tk.Frame(self.server_frame)
@@ -78,6 +78,9 @@ class FTPServerGUI:
 
     def update_user_count(self, change):
         self.user_count += change
+        # Asegurarse de que el contador no sea menor que cero
+        if self.user_count < 0:
+            self.user_count = 0
         self.user_count_label.config(text=f"Usuarios conectados: {self.user_count}")
 
     # Función para limpiar el área de texto del log
@@ -115,29 +118,28 @@ class FTPServerGUI:
 
         authorizer = DummyAuthorizer()
         authorizer.add_user(username, password, directory, perm="elradfmw")
-
-        handler = ftpH.CustomFTPHandler
-        handler.authorizer = authorizer
+        handler = None
 
         if self.options_frame.is_tls_enabled():
             cert_file = self.options_frame.get_tls_cert_file()
             key_file = self.options_frame.get_tls_key_file()
 
             if cert_file and key_file:
+                handler = ftpH.CustomTLSFTPHandler
                 # Asignar el cert y la key al handler
                 handler.certfile = cert_file
                 handler.keyfile = key_file
-                handler.tls_control_required = True
-                handler.tls_data_required = True
             else:
                 messagebox.showerror("Error", "Certificado o clave privada no especificados")
                 return
         else:
+            handler = ftpH.CustomFTPHandler
             handler.certfile = None
             handler.keyfile = None
             handler.tls_control_required = False
             handler.tls_data_required = False
 
+        handler.authorizer = authorizer
         handler.gui = self
         handler.ip_filter = self.ip_filter
 

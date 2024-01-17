@@ -5,10 +5,10 @@ from tkinter import messagebox
 from tkinter import filedialog
 
 class OptionsFrame(tk.Frame):
-    def __init__(self, master, **kwargs):
+    def __init__(self, master, ip_filter, **kwargs):
         # Extrae 'show_server_callback' de kwargs
         self.show_server_callback = kwargs.pop('show_server_callback', None)
-
+        self.ip_filter = ip_filter
         super().__init__(master, **kwargs)
 
         # Crea el Notebook (contenedor de pestañas)
@@ -37,9 +37,6 @@ class OptionsFrame(tk.Frame):
         # Crea el Frame para opciones avanzadas
         self.advanced_options_frame = tk.Frame(self.notebook)
         self.notebook.add(self.advanced_options_frame, text='Opciones Avanzadas')
-
-        # Aquí comienza la modificación
-        self.ip_filter = ipFilter.IPFilter('blocked_ips')  # 'blocked_ips.ipf' será el archivo utilizado
 
         # Botón para gestionar IPs
         self.ip_manage_button = tk.Button(self.advanced_options_frame, text="Gestionar IPs", command=self.open_ip_manage_popup, width=20)
@@ -137,6 +134,7 @@ class OptionsFrame(tk.Frame):
 
     def update_blocked_ips_listbox(self):
         self.blocked_ips_listbox.delete(0, tk.END)  # Limpiar lista actual
+        print(self.ip_filter.blocked_ips)
         for ip in self.ip_filter.blocked_ips:
             self.blocked_ips_listbox.insert(tk.END, ip)  # Añadir IPs a la lista
 

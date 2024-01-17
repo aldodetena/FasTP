@@ -58,6 +58,7 @@ class IPFilter:
     def save_blocked_ips(self):
         try:
             with open(self.filename, 'w') as file:
-                file.write('\n'.join(self.blocked_ips))
+                for ip in self.blocked_ips:
+                    file.write(ip + '\n')
         except IOError as e:
             print(f"Error al guardar las IPs bloqueadas: {e}")
