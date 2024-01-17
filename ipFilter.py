@@ -1,9 +1,13 @@
 import ipaddress
 import threading
+import os
 
 class IPFilter:
     def __init__(self, filename):
         self.filename = filename + ".ipf"
+        if not os.path.exists(self.filename):
+            # Si el archivo no existe, créalo
+            open(self.filename, 'a').close()
         self.blocked_ips = self.load_blocked_ips()
 
     def reload_blocked_ips(self):

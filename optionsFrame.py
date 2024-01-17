@@ -134,7 +134,6 @@ class OptionsFrame(tk.Frame):
 
     def update_blocked_ips_listbox(self):
         self.blocked_ips_listbox.delete(0, tk.END)  # Limpiar lista actual
-        print(self.ip_filter.blocked_ips)
         for ip in self.ip_filter.blocked_ips:
             self.blocked_ips_listbox.insert(tk.END, ip)  # Añadir IPs a la lista
 

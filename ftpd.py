@@ -77,7 +77,9 @@ class FTPServerGUI:
             self.directory_entry.insert(0, directory)
 
     def update_user_count(self, change):
+        """Función para manejar la reinicialización a 0 de los usuarios conectados"""
         self.user_count += change
+        print(self.user_count)
         # Asegurarse de que el contador no sea menor que cero
         if self.user_count < 0:
             self.user_count = 0
@@ -88,11 +90,6 @@ class FTPServerGUI:
         self.log_text.config(state='normal')
         self.log_text.delete('1.0', tk.END)  # Eliminar todo el texto desde el principio hasta el final
         self.log_text.config(state='disabled')
-
-    # Función para manejar la reinicialización a 0 de los usuarios conectados
-    def update_user_count(self, change):
-        self.user_count += change
-        self.user_count_label.config(text=f"Usuarios conectados: {self.user_count}")
 
     def reload_ips_periodically(self):
         while True:
