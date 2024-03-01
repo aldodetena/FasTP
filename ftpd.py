@@ -22,6 +22,7 @@ class FTPServerGUI:
         self.server_frame = tk.Frame(root)
         self.server_frame.pack(fill=tk.BOTH, expand=True)
 
+        self.port = 45000 # Puerto predeterminado
         self.user_count = 0
         self.user_count_label = tk.Label(self.server_frame, text="Usuarios conectados: 0")
         self.user_count_label.pack()
@@ -41,7 +42,7 @@ class FTPServerGUI:
         threading.Thread(target=self.reload_ips_periodically, daemon=True).start()
 
         # Marco para las opciones avanzadas
-        self.options_frame = OptionsFrame(root, ip_filter=self.ip_filter, show_server_callback=self.show_server)
+        self.options_frame = OptionsFrame(root, parent=self, ip_filter=self.ip_filter, show_server_callback=self.show_server)
 
         # Menú de opciones
         self.menu_frame = tk.Frame(self.server_frame)
@@ -79,7 +80,6 @@ class FTPServerGUI:
     def update_user_count(self, change):
         """Función para manejar la reinicialización a 0 de los usuarios conectados"""
         self.user_count += change
-        print(self.user_count)
         # Asegurarse de que el contador no sea menor que cero
         if self.user_count < 0:
             self.user_count = 0
@@ -99,6 +99,9 @@ class FTPServerGUI:
             except Exception as e:
                 self.log_event(f"Error al recargar las IPs: {e}")
             time.sleep(60)
+
+    def change_port(self, new_port):
+        self.port = new_port
 
     def start_server(self):
         username = self.options_frame.get_username()
@@ -140,7 +143,9 @@ class FTPServerGUI:
         handler.gui = self
         handler.ip_filter = self.ip_filter
 
-        self.server = FTPServer(('0.0.0.0', 45000), handler)
+        print(f"Iniciando el servidor en el puerto {self.port}")
+
+        self.server = FTPServer(('0.0.0.0', self.port), handler)
         self.server_thread = Thread(target=self.server.serve_forever)
         self.server_thread.daemon = True
         self.server_thread.start()

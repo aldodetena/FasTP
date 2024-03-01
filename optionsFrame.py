@@ -5,10 +5,11 @@ from tkinter import messagebox
 from tkinter import filedialog
 
 class OptionsFrame(tk.Frame):
-    def __init__(self, master, ip_filter, **kwargs):
+    def __init__(self, master, parent, ip_filter, **kwargs):
         # Extrae 'show_server_callback' de kwargs
         self.show_server_callback = kwargs.pop('show_server_callback', None)
         self.ip_filter = ip_filter
+        self.parent = parent
         super().__init__(master, **kwargs)
 
         # Crea el Notebook (contenedor de pestañas)
@@ -33,6 +34,14 @@ class OptionsFrame(tk.Frame):
 
         self.directory_button = tk.Button(self.basic_options_frame, text="Seleccionar Directorio", command=self.select_directory, width=20)
         self.directory_button.pack(pady=5)
+
+        # Opción para cambiar el puerto
+        tk.Label(self.basic_options_frame, text="Puerto:").pack()
+        self.port_entry = tk.Entry(self.basic_options_frame)
+        self.port_entry.pack(pady=5)
+
+        self.port_change_button = tk.Button(self.basic_options_frame, text="Cambiar Puerto", command=self.change_port, width=20)
+        self.port_change_button.pack(pady=5)
 
         # Crea el Frame para opciones avanzadas
         self.advanced_options_frame = tk.Frame(self.notebook)
@@ -136,6 +145,18 @@ class OptionsFrame(tk.Frame):
         self.blocked_ips_listbox.delete(0, tk.END)  # Limpiar lista actual
         for ip in self.ip_filter.blocked_ips:
             self.blocked_ips_listbox.insert(tk.END, ip)  # Añadir IPs a la lista
+
+    def change_port(self):
+        port_str = self.port_entry.get()
+        try:
+            port = int(port_str)
+            if 1 <= port <= 65535:
+                # Aquí lógica para cambiar el puerto en el servidor
+                print(f"El puerto ha sido cambiado a {port}")  # O maneja el cambio como sea necesario
+            else:
+                raise ValueError("El número de puerto debe estar entre 1 y 65535.")
+        except ValueError:
+            messagebox.showerror("Error", f"Entrada no válida para el puerto: '{port_str}'. Por favor, introduce un número entre 1 y 65535.")
 
     def is_tls_enabled(self):
         return self.tls_var.get()

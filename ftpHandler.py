@@ -1,5 +1,4 @@
 from pyftpdlib.handlers import FTPHandler, TLS_FTPHandler
-import time
 import json
 
 class CustomFTPHandler(FTPHandler):
@@ -13,7 +12,6 @@ class CustomFTPHandler(FTPHandler):
 
     config = load_config('config.json')
     max_attempts = config['max_login_attempts']
-    block_time = config['block_time_seconds']
 
     def on_connect(self):
         # Primero, verifica si la IP está bloqueada
@@ -42,25 +40,17 @@ class CustomFTPHandler(FTPHandler):
     def on_login_failed(self, username, password):
         CustomFTPHandler.handle_log(f"Intento de inicio de sesión fallido para el usuario '{username}'")
         ip = self.remote_ip
-        attempts, last_attempt_time = CustomFTPHandler.login_attempts.get(ip, [0, time.time()])
-        if time.time() - last_attempt_time > CustomFTPHandler.block_time:
-            attempts = 0
-        CustomFTPHandler.login_attempts[ip] = [attempts + 1, time.time()]
-        if attempts >= CustomFTPHandler.max_attempts:
-            # Bloquear la IP utilizando IPFilter
-            CustomFTPHandler.ip_filter.block_temporarily(ip, CustomFTPHandler.block_time)
-            CustomFTPHandler.handle_log("Demasiados intentos fallidos: " + ip)
-            self.close_when_done()
+        self.check_and_block_login_attempt(ip)
 
     def check_and_block_login_attempt(self, ip):
-        attempts, last_attempt_time = CustomFTPHandler.login_attempts.get(ip, [0, time.time()])
-        if time.time() - last_attempt_time > CustomFTPHandler.block_time:
-            attempts = 0
-        CustomFTPHandler.login_attempts[ip] = [attempts + 1, time.time()]
+        attempts = CustomFTPHandler.login_attempts.get(ip, [0])[0]
+        attempts += 1
+        CustomFTPHandler.login_attempts[ip] = [attempts]
+
         if attempts >= CustomFTPHandler.max_attempts:
-            # Bloquear la IP utilizando IPFilter
-            CustomFTPHandler.ip_filter.block_temporarily(ip, CustomFTPHandler.block_time)
-            return True
+            if CustomFTPHandler.ip_filter.add_ip(ip):
+                CustomFTPHandler.handle_log(f"IP {ip} bloqueada permanentemente por demasiados intentos fallidos.")
+                return True
         return False
     
     @staticmethod
