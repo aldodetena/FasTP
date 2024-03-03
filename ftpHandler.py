@@ -37,6 +37,12 @@ class CustomFTPHandler(FTPHandler):
         if CustomFTPHandler.gui:
             CustomFTPHandler.gui.update_user_count(-1)
 
+    def on_login_successful(self, username):
+        ip = self.remote_ip
+        if ip in CustomFTPHandler.login_attempts:
+            del CustomFTPHandler.login_attempts[ip]
+        CustomFTPHandler.handle_log(f"Inicio de sesión exitoso para {username}")
+
     def on_login_failed(self, username, password):
         CustomFTPHandler.handle_log(f"Intento de inicio de sesión fallido para el usuario '{username}'")
         ip = self.remote_ip

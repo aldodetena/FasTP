@@ -1,10 +1,10 @@
 import ipaddress
-import threading
 import os
 
 class IPFilter:
-    def __init__(self, filename):
+    def __init__(self, filename, login_attempts):
         self.filename = filename + ".ipf"
+        self.login_attempts = login_attempts
         if not os.path.exists(self.filename):
             # Si el archivo no existe, créalo
             open(self.filename, 'a').close()
@@ -34,6 +34,8 @@ class IPFilter:
         if ip in self.blocked_ips:
             self.blocked_ips.remove(ip)
             self.save_blocked_ips()
+            # Eliminar también los intentos fallidos si existen
+            self.login_attempts.pop(ip, None)
             return True
         return False
 

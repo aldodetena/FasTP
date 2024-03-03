@@ -151,8 +151,9 @@ class OptionsFrame(tk.Frame):
         try:
             port = int(port_str)
             if 1 <= port <= 65535:
-                # Aquí lógica para cambiar el puerto en el servidor
-                print(f"El puerto ha sido cambiado a {port}")  # O maneja el cambio como sea necesario
+                # Llamar al método change_port de FTPServerGUI
+                self.parent.change_port(port)
+                messagebox.showinfo("Información", f"El puerto ha sido cambiado a {port}")
             else:
                 raise ValueError("El número de puerto debe estar entre 1 y 65535.")
         except ValueError:

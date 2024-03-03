@@ -16,7 +16,7 @@ class FTPServerGUI:
         self.root = root
         root.title("Servidor FTP")
         # Inicializa IPFilter
-        self.ip_filter = ipFilter.IPFilter('blocked_ips')
+        self.ip_filter = ipFilter.IPFilter('blocked_ips', ftpH.CustomFTPHandler.login_attempts)
 
         # Marco para la configuración general del servidor
         self.server_frame = tk.Frame(root)
