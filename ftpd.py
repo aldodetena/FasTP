@@ -22,7 +22,7 @@ class FTPServerGUI:
         self.server_frame = tk.Frame(root)
         self.server_frame.pack(fill=tk.BOTH, expand=True)
 
-        self.port = 45000 # Puerto predeterminado
+        self.port = 45000 # Puerto Predeterminado
         self.user_count = 0
         self.user_count_label = tk.Label(self.server_frame, text="Usuarios conectados: 0")
         self.user_count_label.pack()
@@ -46,10 +46,10 @@ class FTPServerGUI:
 
         # Menú de opciones
         self.menu_frame = tk.Frame(self.server_frame)
-        self.menu_frame.pack(side=tk.TOP, fill=tk.X)
+        self.menu_frame.pack(side=tk.TOP, fill=tk.X, pady=5)
 
         # Botón de opciones
-        self.options_button = tk.Button(self.menu_frame, text="Opciones", command=self.show_options)
+        self.options_button = tk.Button(self.menu_frame, text="Opciones", command=self.show_options, width=15)
         self.options_button.pack(side=tk.BOTTOM)
 
         self.server = None
@@ -107,6 +107,7 @@ class FTPServerGUI:
         username = self.options_frame.get_username()
         password = self.options_frame.get_password()
         directory = self.options_frame.get_directory()
+        port_str = self.options_frame.port_entry.get()
 
         self.user_count = 0
         self.update_user_count(0)
@@ -115,6 +116,18 @@ class FTPServerGUI:
         if not (username and password and directory):
             messagebox.showerror("Error", "Todos los campos son obligatorios")
             return
+        
+        if port_str:  # Si el usuario ha ingresado algo...
+            try:
+                port = int(port_str)
+                if 1 <= port <= 65535:
+                    self.port = port
+                else:
+                    messagebox.showerror("Error", "El número de puerto debe estar entre 1 y 65535.")
+                    return
+            except ValueError:
+                messagebox.showerror("Error", f"Entrada no válida para el puerto: '{port_str}'. Por favor, introduce un número entre 1 y 65535.")
+                return
 
         authorizer = DummyAuthorizer()
         authorizer.add_user(username, password, directory, perm="elradfmw")
@@ -171,6 +184,9 @@ class FTPServerGUI:
         self.start_button.config(state=tk.NORMAL)
         self.stop_button.config(state=tk.DISABLED)
         self.status_label.config(text="Estado: Detenido")
+
+    def is_server_running(self):
+        return self.server is not None and self.server_thread is not None and self.server_thread.is_alive()
 
 if __name__ == "__main__":
     root = tk.Tk()
