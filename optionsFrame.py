@@ -1,11 +1,30 @@
 import tkinter as tk
-import ipFilter
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
 
 class OptionsFrame(tk.Frame):
+    """
+    Un marco de Tkinter que proporciona una interfaz para configurar las opciones del servidor FTP.
+
+    Permite al usuario ingresar credenciales de usuario, seleccionar directorios, gestionar IPs bloqueadas,
+    configurar TLS y elegir archivos de certificado y clave privada.
+
+    Attributes:
+        show_server_callback (function): Función para volver a la vista del servidor principal.
+        ip_filter (IPFilter): Instancia para gestionar el filtrado de IPs.
+        parent: El contenedor padre para este frame.
+    """
     def __init__(self, master, parent, ip_filter, **kwargs):
+        """
+        Inicializa la instancia de OptionsFrame.
+
+        Args:
+            master: Widget padre.
+            parent: Contenedor padre para este frame.
+            ip_filter (IPFilter): Instancia de IPFilter para gestionar IPs bloqueadas.
+            **kwargs: Argumentos de palabra clave adicionales.
+        """
         # Extrae 'show_server_callback' de kwargs
         self.show_server_callback = kwargs.pop('show_server_callback', None)
         self.ip_filter = ip_filter
@@ -70,12 +89,20 @@ class OptionsFrame(tk.Frame):
             self.back_button.pack()
     
     def select_directory(self):
+        """
+        Abre un diálogo para que el usuario seleccione un directorio.
+        Actualiza la entrada del directorio con el directorio seleccionado.
+        """
         directory = filedialog.askdirectory()
         if directory:
             self.directory_entry.delete(0, tk.END)
             self.directory_entry.insert(0, directory)
 
     def on_tls_checkbox(self):
+        """
+        Habilita o deshabilita la entrada de archivos de certificado y clave privada
+        basado en el estado del checkbox de TLS.
+        """
         if self.tls_var.get():
             # Activar TLS
             self.cert_file_entry.config(state='normal')
@@ -90,6 +117,12 @@ class OptionsFrame(tk.Frame):
             self.key_file_button.config(state='disabled')
 
     def on_select_file(self, file_type):
+        """
+        Abre un diálogo para que el usuario seleccione un archivo de certificado o clave privada.
+
+        Args:
+            file_type (str): 'cert' para certificado, 'key' para clave privada.
+        """
         file_path = filedialog.askopenfilename(
             title=f"Seleccionar {'Certificado' if file_type == 'cert' else 'Clave Privada'}",
             filetypes=(("Archivos PEM", "*.pem"), ("Archivos KEY", "*.key"), ("Todos los archivos", "*.*"))
@@ -103,6 +136,10 @@ class OptionsFrame(tk.Frame):
                 self.key_file_entry.insert(0, file_path)
 
     def open_ip_manage_popup(self):
+        """
+        Abre una ventana emergente para gestionar las IPs bloqueadas.
+        Permite al usuario añadir o eliminar IPs de la lista de bloqueo.
+        """
         self.popup = tk.Toplevel(self)
         self.popup.title("Gestión de IPs")
 
@@ -123,6 +160,9 @@ class OptionsFrame(tk.Frame):
         remove_ip_button.pack()
 
     def add_ip_to_filter(self):
+        """
+        Añade la IP introducida por el usuario a la lista de IPs bloqueadas.
+        """
         ip_to_add = self.add_ip_entry.get()
         if self.ip_filter.add_ip(ip_to_add):
             self.update_blocked_ips_listbox()
@@ -130,6 +170,9 @@ class OptionsFrame(tk.Frame):
             messagebox.showerror("Error", "Dirección IP no válida o ya añadida.")
 
     def remove_selected_ip(self):
+        """
+        Elimina la IP seleccionada por el usuario de la lista de IPs bloqueadas.
+        """
         selected_indices = self.blocked_ips_listbox.curselection()
         if selected_indices:
             selected_ip = self.blocked_ips_listbox.get(selected_indices[0])
@@ -139,25 +182,63 @@ class OptionsFrame(tk.Frame):
                 messagebox.showerror("Error", "La dirección IP no se encuentra en la lista.")
 
     def update_blocked_ips_listbox(self):
+        """
+        Actualiza la lista de IPs bloqueadas mostrada en la interfaz de usuario.
+        """
         self.blocked_ips_listbox.delete(0, tk.END)  # Limpiar lista actual
         for ip in self.ip_filter.blocked_ips:
             self.blocked_ips_listbox.insert(tk.END, ip)  # Añadir IPs a la lista
 
     def is_tls_enabled(self):
+        """
+        Devuelve el estado actual del checkbox de TLS.
+
+        Returns:
+            bool: True si TLS está habilitado, False en caso contrario.
+        """
         return self.tls_var.get()
 
     def get_tls_cert_file(self):
+        """
+        Devuelve la ruta del archivo de certificado seleccionado.
+
+        Returns:
+            str: Ruta del archivo de certificado.
+        """
         return self.cert_file_entry.get()
 
     def get_tls_key_file(self):
+        """
+        Devuelve la ruta del archivo de clave privada seleccionado.
+
+        Returns:
+            str: Ruta del archivo de clave privada.
+        """
         return self.key_file_entry.get()
 
-    # Métodos para obtener los valores ingresados
     def get_username(self):
+        """
+        Obtiene el nombre de usuario introducido por el usuario.
+
+        Returns:
+            str: El nombre de usuario introducido.
+        """
         return self.username_entry.get()
 
     def get_password(self):
+        """
+        Obtiene la contraseña introducida por el usuario.
+
+        Returns:
+            str: La contraseña introducida.
+        """
         return self.password_entry.get()
 
     def get_directory(self):
+        """
+        Obtiene el directorio seleccionado por el usuario.
+
+        Returns:
+            str: El directorio seleccionado.
+        """
         return self.directory_entry.get()

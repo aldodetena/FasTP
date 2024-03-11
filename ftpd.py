@@ -12,7 +12,27 @@ from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.servers import FTPServer
 
 class FTPServerGUI:
+    """
+    Representa la interfaz gráfica de usuario (GUI) para un servidor FTP, permitiendo controlar
+    el inicio y detención del servidor, así como la configuración de diversas opciones.
+
+    Attributes:
+        root (tk.Tk): La ventana principal de la aplicación.
+        ip_filter (IPFilter): Instancia de IPFilter para el manejo del bloqueo de IPs.
+        server_frame (tk.Frame): El marco principal que contiene los controles del servidor.
+        port (int): El puerto en el que el servidor escucha.
+        user_count (int): Contador de usuarios conectados actualmente.
+        log_text (tk.Text): Área de texto para mostrar los registros de eventos.
+        server (FTPServer): La instancia del servidor FTP en ejecución.
+        server_thread (Thread): El hilo en el que se ejecuta el servidor FTP.
+    """
     def __init__(self, root):
+        """
+        Inicializa la GUI del servidor FTP, configurando la ventana principal y los elementos de la GUI.
+
+        Args:
+            root (tk.Tk): La ventana principal de la aplicación.
+        """
         self.root = root
         root.title("Servidor FTP")
         # Inicializa IPFilter
@@ -56,42 +76,54 @@ class FTPServerGUI:
         self.server_thread = None
 
     def show_options(self):
-        # Lógica para mostrar el marco de opciones
+        """Muestra el marco de opciones para la configuración avanzada del servidor."""
         self.server_frame.pack_forget()
         self.options_frame.pack(fill=tk.BOTH, expand=True)
 
     def show_server(self):
-        # Lógica para mostrar el marco del servidor
+        """Vuelve a mostrar el marco del servidor, ocultando las opciones avanzadas."""
         self.options_frame.pack_forget()
         self.server_frame.pack(fill=tk.BOTH, expand=True)
 
     def log_event(self, message):
+        """Registra un mensaje en el área de texto de registro de la GUI.
+
+        Args:
+            message (str): El mensaje a registrar.
+        """
         self.log_text.config(state='normal')
         self.log_text.insert(tk.END, message + "\n")
         self.log_text.config(state='disabled')
         self.log_text.yview(tk.END)
     
     def select_directory(self):
+        """Abre un diálogo para que el usuario seleccione el directorio raíz del servidor FTP."""
         directory = filedialog.askdirectory()
         if directory:
             self.directory_entry.delete(0, tk.END)
             self.directory_entry.insert(0, directory)
 
     def update_user_count(self, change):
-        """Función para manejar la reinicialización a 0 de los usuarios conectados"""
+        """
+        Actualiza el contador de usuarios conectados.
+
+        Args:
+            change (int): El cambio en el número de usuarios (positivo para incrementar, negativo para decrementar).
+        """
         self.user_count += change
         # Asegurarse de que el contador no sea menor que cero
         if self.user_count < 0:
             self.user_count = 0
         self.user_count_label.config(text=f"Usuarios conectados: {self.user_count}")
 
-    # Función para limpiar el área de texto del log
     def clear_log(self):
+        """Limpia el área de texto que muestra los registros de eventos."""
         self.log_text.config(state='normal')
         self.log_text.delete('1.0', tk.END)  # Eliminar todo el texto desde el principio hasta el final
         self.log_text.config(state='disabled')
 
     def reload_ips_periodically(self):
+        """Recarga periódicamente la lista de IPs bloqueadas desde el archivo."""
         while True:
             try:
                 self.ip_filter.reload_blocked_ips()
@@ -101,9 +133,16 @@ class FTPServerGUI:
             time.sleep(60)
 
     def change_port(self, new_port):
+        """
+        Cambia el puerto en el que el servidor debe escuchar.
+
+        Args:
+            new_port (int): El nuevo puerto para el servidor.
+        """
         self.port = new_port
 
     def start_server(self):
+        """Inicia el servidor FTP en un hilo separado."""
         username = self.options_frame.get_username()
         password = self.options_frame.get_password()
         directory = self.options_frame.get_directory()
@@ -168,6 +207,7 @@ class FTPServerGUI:
         self.status_label.config(text="Estado: En ejecución")
         
     def stop_server(self):
+        """Detiene el servidor FTP y limpia los recursos."""
         if self.server:
             self.server.close_all()  # Cierra todas las conexiones del servidor
             self.server = None
@@ -186,6 +226,11 @@ class FTPServerGUI:
         self.status_label.config(text="Estado: Detenido")
 
     def is_server_running(self):
+        """Verifica si el servidor FTP está actualmente en ejecución.
+
+        Returns:
+            bool: True si el servidor está en ejecución, False en caso contrario.
+        """
         return self.server is not None and self.server_thread is not None and self.server_thread.is_alive()
 
 if __name__ == "__main__":
