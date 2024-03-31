@@ -35,7 +35,7 @@ class FTPServerGUI:
             root (tk.Tk): La ventana principal de la aplicación.
         """
         self.root = root
-        root.title("Servidor FTP")
+        root.title("FasTP")
         # Inicializa IPFilter
         self.ip_filter = ipFilter.IPFilter('blocked_ips')
 
