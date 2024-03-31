@@ -1,9 +1,9 @@
-from pyftpdlib.handlers import FTPHandler
+from pyftpdlib.handlers import TLS_FTPHandler
 import json
 
-class CustomFTPHandler(FTPHandler):
+class CustomTLSFTPHandler(TLS_FTPHandler):
     """
-    Clase para manejar conexiones FTP personalizadas. Incluye manejo de intentos de inicio de sesión fallidos y
+    Clase para manejar conexiones FTP seguras (TLS/SSL). Incluye manejo de intentos de inicio de sesión fallidos y
     bloqueo de IPs basado en esos intentos. También proporciona un mecanismo para registrar eventos a través de una GUI.
 
     Atributos de clase:
@@ -14,6 +14,8 @@ class CustomFTPHandler(FTPHandler):
     gui = None  # Variable de clase para mantener la referencia a la GUI
     ip_filter = None  # Referencia a IPFilter
     login_attempts = {}  # Diccionario para rastrear los intentos fallidos
+    tls_control_required = True
+    tls_data_required = True
 
     def load_config(filename):
         """
@@ -43,30 +45,30 @@ class CustomFTPHandler(FTPHandler):
         Acciones a realizar cuando un cliente se conecta. Verifica si la IP está bloqueada.
         """
         # Primero, verifica si la IP está bloqueada
-        if CustomFTPHandler.ip_filter and CustomFTPHandler.ip_filter.is_blocked(self.remote_ip):
-            CustomFTPHandler.handle_log("Conexión bloqueada: " + self.remote_ip)
+        if CustomTLSFTPHandler.ip_filter and CustomTLSFTPHandler.ip_filter.is_blocked(self.remote_ip):
+            CustomTLSFTPHandler.handle_log("Conexión bloqueada: " + self.remote_ip)
             self.close_when_done()
             return
 
         # Verifica los intentos de inicio de sesión fallidos y bloquea si es necesario
         if self.check_and_block_login_attempt(self.remote_ip):
-            CustomFTPHandler.handle_log("Bloqueado por demasiados intentos fallidos: " + self.remote_ip)
+            CustomTLSFTPHandler.handle_log("Bloqueado por demasiados intentos fallidos: " + self.remote_ip)
             self.close_when_done()
             return
         else:
             super().on_connect()
-            CustomFTPHandler.handle_log(f"Cliente conectado: {self.remote_ip}")
-            if CustomFTPHandler.gui:
-                CustomFTPHandler.gui.update_user_count(1)
+            CustomTLSFTPHandler.handle_log(f"Cliente conectado: {self.remote_ip}")
+            if CustomTLSFTPHandler.gui:
+                CustomTLSFTPHandler.gui.update_user_count(1)
 
     def on_disconnect(self):
         """
         Acciones a realizar cuando un cliente se desconecta.
         """
         super().on_disconnect()
-        CustomFTPHandler.handle_log(f"Cliente desconectado: {self.remote_ip}")
-        if CustomFTPHandler.gui:
-            CustomFTPHandler.gui.update_user_count(-1)
+        CustomTLSFTPHandler.handle_log(f"Cliente desconectado: {self.remote_ip}")
+        if CustomTLSFTPHandler.gui:
+            CustomTLSFTPHandler.gui.update_user_count(-1)
 
     def on_login(self, username):
         """
@@ -76,9 +78,9 @@ class CustomFTPHandler(FTPHandler):
             username: Nombre de usuario del cliente que ha iniciado sesión.
         """
         ip = self.remote_ip
-        if ip in CustomFTPHandler.login_attempts:
-            del CustomFTPHandler.login_attempts[ip]
-        CustomFTPHandler.handle_log(f"Inicio de sesión exitoso para {username}")
+        if ip in CustomTLSFTPHandler.login_attempts:
+            del CustomTLSFTPHandler.login_attempts[ip]
+        CustomTLSFTPHandler.handle_log(f"Inicio de sesión exitoso para {username}")
 
     def on_login_failed(self, username, password):
         """
@@ -88,7 +90,7 @@ class CustomFTPHandler(FTPHandler):
             username: Nombre de usuario utilizado en el intento fallido.
             password: Contraseña utilizada en el intento fallido.
         """
-        CustomFTPHandler.handle_log(f"Intento de inicio de sesión fallido para el usuario '{username}'")
+        CustomTLSFTPHandler.handle_log(f"Intento de inicio de sesión fallido para el usuario '{username}'")
 
     def check_and_block_login_attempt(self, ip):
         """
@@ -100,13 +102,13 @@ class CustomFTPHandler(FTPHandler):
         Returns:
             True si la IP ha sido bloqueada, False en caso contrario.
         """
-        attempts = CustomFTPHandler.login_attempts.get(ip, [0])[0]
+        attempts = CustomTLSFTPHandler.login_attempts.get(ip, [0])[0]
         attempts += 1
-        CustomFTPHandler.login_attempts[ip] = [attempts]
+        CustomTLSFTPHandler.login_attempts[ip] = [attempts]
 
-        if attempts > CustomFTPHandler.max_attempts:
-            if CustomFTPHandler.ip_filter.add_ip(ip):
-                CustomFTPHandler.handle_log(f"IP {ip} bloqueada permanentemente por demasiados intentos fallidos.")
+        if attempts > CustomTLSFTPHandler.max_attempts:
+            if CustomTLSFTPHandler.ip_filter.add_ip(ip):
+                CustomTLSFTPHandler.handle_log(f"IP {ip} bloqueada permanentemente por demasiados intentos fallidos.")
                 return True
         return False
     
@@ -119,7 +121,7 @@ class CustomFTPHandler(FTPHandler):
             message: Mensaje a registrar.
         """
         # Maneja el registro de eventos, ya sea en la GUI o en el log estándar.
-        if CustomFTPHandler.gui:
-            CustomFTPHandler.gui.log_event(message)
+        if CustomTLSFTPHandler.gui:
+            CustomTLSFTPHandler.gui.log_event(message)
         else:
             print(message)

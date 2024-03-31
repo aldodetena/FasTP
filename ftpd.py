@@ -3,6 +3,7 @@ import threading
 import time
 import tkinter as tk
 import ftpHandler as ftpH
+import tlsFtpHandler as sftpH
 import ipFilter
 from optionsFrame import OptionsFrame
 from tkinter import messagebox
@@ -36,7 +37,7 @@ class FTPServerGUI:
         self.root = root
         root.title("Servidor FTP")
         # Inicializa IPFilter
-        self.ip_filter = ipFilter.IPFilter('blocked_ips', ftpH.CustomFTPHandler.login_attempts)
+        self.ip_filter = ipFilter.IPFilter('blocked_ips')
 
         # Marco para la configuración general del servidor
         self.server_frame = tk.Frame(root)
@@ -175,10 +176,10 @@ class FTPServerGUI:
         if self.options_frame.is_tls_enabled():
             cert_file = self.options_frame.get_tls_cert_file()
             key_file = self.options_frame.get_tls_key_file()
+            self.ip_filter.set_login_attempts(sftpH.CustomTLSFTPHandler.login_attempts)
 
             if cert_file and key_file:
-                handler = ftpH.CustomTLSFTPHandler
-                # Asignar el cert y la key al handler
+                handler = sftpH.CustomTLSFTPHandler
                 handler.certfile = cert_file
                 handler.keyfile = key_file
             else:
@@ -190,12 +191,13 @@ class FTPServerGUI:
             handler.keyfile = None
             handler.tls_control_required = False
             handler.tls_data_required = False
+            self.ip_filter.set_login_attempts(ftpH.CustomFTPHandler.login_attempts)
 
         handler.authorizer = authorizer
         handler.gui = self
         handler.ip_filter = self.ip_filter
 
-        print(f"Iniciando el servidor en el puerto {self.port}")
+        self.log_event(f"Iniciando el servidor en el puerto {self.port}")
 
         self.server = FTPServer(('0.0.0.0', self.port), handler)
         self.server_thread = Thread(target=self.server.serve_forever)
@@ -224,14 +226,6 @@ class FTPServerGUI:
         self.start_button.config(state=tk.NORMAL)
         self.stop_button.config(state=tk.DISABLED)
         self.status_label.config(text="Estado: Detenido")
-
-    def is_server_running(self):
-        """Verifica si el servidor FTP está actualmente en ejecución.
-
-        Returns:
-            bool: True si el servidor está en ejecución, False en caso contrario.
-        """
-        return self.server is not None and self.server_thread is not None and self.server_thread.is_alive()
 
 if __name__ == "__main__":
     root = tk.Tk()

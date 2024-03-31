@@ -11,7 +11,7 @@ class IPFilter:
         login_attempts (dict): Un diccionario que rastrea los intentos de inicio de sesión fallidos por IP.
         blocked_ips (list): Lista de IPs bloqueadas cargadas desde el archivo.
     """
-    def __init__(self, filename, login_attempts):
+    def __init__(self, filename, login_attempts=None):
         """
         Inicializa el filtro de IP.
 
@@ -105,6 +105,14 @@ class IPFilter:
                 return file.read().splitlines()
         except FileNotFoundError:
             return []
+        
+    def set_login_attempts(self, login_attempts):
+        """Establece o actualiza el diccionario de intentos de inicio de sesión fallidos.
+
+        Args:
+            login_attempts (dict): Un diccionario que rastrea los intentos de inicio de sesión fallidos por IP.
+        """
+        self.login_attempts = login_attempts
 
     def save_blocked_ips(self):
         """Guarda la lista actualizada de IPs bloqueadas en el archivo."""

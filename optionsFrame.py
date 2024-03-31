@@ -125,7 +125,7 @@ class OptionsFrame(tk.Frame):
         """
         file_path = filedialog.askopenfilename(
             title=f"Seleccionar {'Certificado' if file_type == 'cert' else 'Clave Privada'}",
-            filetypes=(("Archivos PEM", "*.pem"), ("Archivos KEY", "*.key"), ("Todos los archivos", "*.*"))
+            filetypes=[("Certificados y Clave Privada", ".crt .key"), ("Todos los archivos", "*.*")]
         )
         if file_path:
             if file_type == 'cert':
