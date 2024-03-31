@@ -49,6 +49,12 @@ Si quieres generar varios archivos al mismo tiempo y en la misma carpeta, ejecut
 pdoc --html <archivo .py del repositorio> <archivo .py del repositorio> etc
 ```
 
+Si quieres empaquetar la aplicación, tienes varias alternativas, de todas formas puede llegar a ser algo tedioso,
+personalmente probé pyinstaller para windows, pero tienes que tener bien configurado el entorno y tiene que ser ejecutado en windows,
+también probé dpkg para crear un deb, para ubuntu, es un poco mas sencillo que windows pero también lo complica un poco.
+
+Igualmente recomiendo no empaquetarla dado que no esta suficientemente testeado estas soluciones.
+
 ## Creación de un archivo ejecutable
 
 ### Para Windows (.exe)
